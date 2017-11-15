@@ -6,6 +6,7 @@ import string
 import re
 from re import findall
 
+
 class GetFitch:
     def __init__(self, textStr):
         self.__textStr = textStr
@@ -19,12 +20,17 @@ class GetFitch:
     def __tokens__(self, line):
         tokens_ent = nltk.word_tokenize(line.lower())
         stop_words = stopwords.words('russian')
-        stop_words.extend(['что', 'это', 'так', 'вот', 'быть', 'как', 'в', '—', 'к', 'на', "и"])
-        tokens_ent = [i for i in tokens_ent if ( i not in stop_words )]
-        tokens_ent = [i for i in tokens_ent if ( i not in string.punctuation )]
-        tokens_ent = [i.replace("«", "").replace("»", "").replace("…","").replace("\'\'","").replace("\?","\.")
-                          .replace("!","\.").replace("!\?","\.").replace("?\!","\.").replace(",","").replace("-","")
-                          .replace("``", "").replace("—", "").replace("*", "") for i in tokens_ent]
+        stop_words.extend(['что', 'это', 'так', 'вот',
+                           'быть', 'как', 'в', '—', 'к', 'на', "и"])
+        tokens_ent = [i for i in tokens_ent if (i not in stop_words)]
+        tokens_ent = [i for i in tokens_ent if (i not in string.punctuation)]
+        tokens_ent = [i.replace("«", "").replace("»", "")
+                          .replace("…","").replace("\'\'","")
+                          .replace("\?","\.").replace("!","\.")
+                          .replace("!\?","\.").replace("?\!","\.")
+                          .replace(",","").replace("-","")
+                          .replace("``", "").replace("—", "")
+                          .replace("*", "") for i in tokens_ent]
         tokens_ent = [re.sub("(\d+)", "", i) for i in tokens_ent]
         tokens_ent = [i for i in tokens_ent if i]
         return tokens_ent
@@ -48,16 +54,17 @@ class GetFitch:
             str_of_text[i] = morph.parse(str_of_text[i])[0].normal_form
             if i > 0:
                 if (str_of_text[i - 1] + ' ' + str_of_text[i]) in bigram_list:
-                    bigram_list[str_of_text[i - 1] + ' ' + str_of_text[i]] = bigram_list.get(str_of_text[i - 1]
-                                                                                             + ' ' + str_of_text[i]) + 1
+                    bigram_list[str_of_text[i - 1] + ' ' + str_of_text[i]] \
+                        = bigram_list.get(str_of_text[i - 1] + ' ' + str_of_text[i]) + 1
                 else:
                     bigram_list[str_of_text[i - 1] + ' ' + str_of_text[i]] = 1
             if str_of_text[i] in list_of_words_in_text:
-                list_of_words_in_text[str_of_text[i]] = list_of_words_in_text.get(str_of_text[i]) + 1
+                list_of_words_in_text[str_of_text[i]] = \
+                    list_of_words_in_text.get(str_of_text[i]) + 1
             else:
                 list_of_words_in_text[str_of_text[i]] = 1
         for key in bigram_list.keys():
-            sovm = bigram_list[key]/ words_in_text
+            sovm = bigram_list[key] / words_in_text
             cont_tok = key.split()
             context = list_of_words_in_text[cont_tok[0]] / words_in_text
             surprisebl += math.log2(1 / (sovm / context))
@@ -89,10 +96,11 @@ class GetFitch:
         glas = ['а','у','о','ы','и','э','я','ю','ё','е']
         str_of_text = self.__tokens__(textStr)
         num_sentans += len(findall('\.|\?!|\?|! ', textStr))
-        for r in range (len(glas)):
+        for r in range(len(glas)):
             col_slog += textStr.count(glas[r])
         words_in_text += len(str_of_text)
-        readab = (((words_in_text - num_sentans) / num_sentans) * 0.39) + (col_slog / (words_in_text - num_sentans)) - 15.59
+        readab = (((words_in_text - num_sentans) / num_sentans) * 0.39) \
+                 + (col_slog / (words_in_text - num_sentans)) - 15.59
         if readab < 0:
             return (-1) / readab
         return readab
@@ -102,8 +110,12 @@ class GetFitch:
         kol_lex = 0
         fich = {}
         morph = pymorphy2.MorphAnalyzer()
-        chasti_rechi = {'NOUN': 0, 'ADJF': 0, 'COMP': 0, 'VERB': 0, 'INFN': 0, 'PRTF': 0, 'PRTS': 0, 'GRND': 0,
-                        'NUMR': 0, 'ADVB': 0, 'NPRO': 0, 'PRED': 0, 'PREP': 0, 'CONJ': 0, 'ADJS': 0, 'PRCL': 0, 'INTJ': 0}
+        chasti_rechi = {'NOUN': 0, 'ADJF': 0, 'COMP': 0,
+                        'VERB': 0, 'INFN': 0, 'PRTF': 0,
+                        'PRTS': 0, 'GRND': 0, 'NUMR': 0,
+                        'ADVB': 0, 'NPRO': 0, 'PRED': 0,
+                        'PREP': 0, 'CONJ': 0, 'ADJS': 0,
+                        'PRCL': 0, 'INTJ': 0}
         list_of_words_in_text = {}
         kol_per_lex = 0
         str_of_text = self.__tokens__(texStr)
@@ -122,13 +134,14 @@ class GetFitch:
                 list_of_words_in_text[str_of_text[i]] = 1
         fich['analit'] = (chasti_rechi.get('PREP') + chasti_rechi.get('CONJ')
                           + chasti_rechi.get('PRCL')) / words_in_text
-        fich['glagol'] = (chasti_rechi.get('VERB') + chasti_rechi.get('INFN') + chasti_rechi.get('PRTF')
-                          + chasti_rechi.get('PRTS') + chasti_rechi.get('GRND')) / words_in_text
+        fich['glagol'] = (chasti_rechi.get('VERB') + chasti_rechi.get('INFN')
+                          + chasti_rechi.get('PRTF') + chasti_rechi.get('PRTS')
+                          + chasti_rechi.get('GRND')) / words_in_text
         fich['substat'] = (chasti_rechi.get('NOUN')) / words_in_text
         fich['adjekt'] = (chasti_rechi.get('ADJF') + chasti_rechi.get('ADJS')) / words_in_text
         fich['mestoim'] = chasti_rechi.get('NPRO') / words_in_text
-        fich['autosem'] = (words_in_text - (chasti_rechi.get('PREP') + chasti_rechi.get('CONJ') + chasti_rechi.get('PRCL'))
-                           - chasti_rechi.get('NPRO')) / words_in_text
+        fich['autosem'] = (words_in_text - (chasti_rechi.get('PREP') + chasti_rechi.get('CONJ')
+                                            + chasti_rechi.get('PRCL')) - chasti_rechi.get('NPRO')) / words_in_text
         for key in list_of_words_in_text.keys():
             if (self.__list_of_lems.count(key) == 1):
                 kol_per_lex += 1

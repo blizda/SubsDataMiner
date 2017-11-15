@@ -1,21 +1,29 @@
 import urllib.parse
+from abc import ABCMeta
 import pymongo
 from bson import ObjectId
 
 
-class MongoWorker:
-    def __init__(self, login, password, dbName, serwDist):
+class MongoWork(metaclass=ABCMeta):
+    def __init__(self, login, password, dbName, servDist):
         self.__login = login
         self.__password = password
         self.__dbName = dbName
-        self.__serwDist = serwDist
+        self.__servDist = servDist
 
     def makeConnection(self):
-        mongo_uri = "mongodb://" + self.__login + ":" +\
-                    urllib.parse.quote(self.__password) + "@" + self.__serwDist + "/" + self.__dbName
+        mongo_uri = "mongodb://" + self.__login + ":" \
+                    + urllib.parse.quote(self.__password) \
+                    + "@" + self.__servDist \
+                    + "/" + self.__dbName
         client = pymongo.MongoClient(mongo_uri)
         db = client[self.__dbName]
         return db
+
+
+class MongoDataPusher(MongoWork):
+    def __init__(self, login, password, dbName, servDist):
+        MongoWork.__init__(self, login, password, dbName, servDist)
 
     def insereSerial(self, serial, db):
         serialDict = {}
@@ -45,7 +53,7 @@ class MongoWorker:
         seriaDict.update(seria.seriaInfo)
         db.serias.insert(seriaDict)
 
-class MongoDataGetter:
-    def __init__(self):
-        pass
 
+class MongoDataPuller(MongoWork):
+    def __init__(self, login, password, dbName, servDist):
+        MongoWork.__init__(self, login, password, dbName, servDist)

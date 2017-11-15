@@ -1,13 +1,13 @@
 import re
-
 import math
+from abc import ABCMeta
 from statistics import median
-
 from chardet import UniversalDetector
 from os import listdir
-from os.path import isdir, join, splitext, basename
+from os.path import join, basename
 from rutermextract import TermExtractor
 from GetFitch import GetFitch
+
 
 class SubsReader:
     def __init__(self, wayToSer):
@@ -39,11 +39,14 @@ class SubsReader:
             self.__listOfTexts = self.__fileInLineReader__(self.__filePath)
         return self.__listOfTexts
 
+
 class MakeSeria(SubsReader, GetFitch):
     def __init__(self, wayToSer):
         SubsReader.__init__(self, wayToSer)
         GetFitch.__init__(self, self.listOfTexts)
         self.__serName = basename(wayToSer).replace('.srt', '').replace('_', ' ')
+        norm = re.sub(r'[^\w\s]+', r' ', self.__serName).strip()
+        self.__serName = norm
         self.__allDict = None
         self.__tf = None
 
@@ -62,7 +65,8 @@ class MakeSeria(SubsReader, GetFitch):
         for term in term_extractor(text, nested = 'true'):
             termsQuantity += term.count
         for term in term_extractor(text, nested = 'true', weight=lambda term: term.count / termsQuantity):
-            wordDic[term.normalized] = term.count / termsQuantity
+            norm = re.sub(r'[^\w\s]+', r' ', term.normalized).strip()
+            wordDic[norm] = term.count / termsQuantity
         return wordDic
 
     @property
@@ -76,12 +80,17 @@ class MakeSeria(SubsReader, GetFitch):
         return self.__serName
 
     @property
-    def allSerInfo(self):
-        thisDict = {}
-        allDict = self.fitch
+    def seriaInfo(self):
+        allDict = {}
+        allDict['seria_name'] = self.serName
+        allDict.update(self.fitch)
         allDict['tf'] = self.tf
-        thisDict[self.serName] = allDict
-        return thisDict
+        return allDict
+
+
+class MetaSer(metaclass=ABCMeta):
+    pass
+
 
 class MakeSeason:
     def __init__(self, wayToSeason):
@@ -105,12 +114,13 @@ class MakeSeason:
             term_extractor = TermExtractor()
             temporarDict = {}
             for term in term_extractor(ser.listOfTexts, nested='true'):
-                if term.normalized not in temporarDict:
-                    if term.normalized in korpDic:
-                        korpDic[term.normalized] = korpDic[term.normalized] + 1
+                norm = re.sub(r'[^\w\s]+', r' ', term.normalized).strip()
+                if norm not in temporarDict:
+                    if norm in korpDic:
+                        korpDic[norm] = korpDic[norm] + 1
                     else:
-                        korpDic[term.normalized] = 1
-                    temporarDict[term] = 1
+                        korpDic[norm] = 1
+                    temporarDict[norm] = 1
         for key in korpDic:
             korpDic[key] = korpDic[key]
         return korpDic
@@ -173,17 +183,18 @@ class MakeSeason:
 
     @property
     def seasInfo(self):
-        thisDict = {}
-        allDict = self.fitch
+        allDict = {}
+        allDict['season_name'] = self.seasName
+        allDict.update(self.fitch)
         allDict['tf'] = self.tf
         allDict['idf'] = self.idf
-        thisDict[self.seasName] = allDict
-        return thisDict
+        return allDict
+
 
 class MakeSerial:
     def __init__(self, wayToSerial):
         self.__wayToSerial = wayToSerial
-        self.__serialName = basename(self.__wayToSerial)
+        self.__serialName = basename(self.__wayToSerial).replace('_', ' ')
         self.__seasList = None
         self.__medFitch = None
         self.__medTf = None
@@ -194,7 +205,7 @@ class MakeSerial:
         serialsList = []
         files = listdir(wayToSerial)
         for file in files:
-            serialsList.append(MakeSeria(join(wayToSerial, file)))
+            serialsList.append(MakeSeason(join(wayToSerial, file)))
         return serialsList
 
     def __idf__(self, seasList):
@@ -243,9 +254,9 @@ class MakeSerial:
 
     @property
     def seasonsList(self):
-        if self.__serList is None:
-            self.__serList = self.__readSeasons__(self.__wayToSerial)
-        return self.__serList
+        if self.__seasList is None:
+            self.__seasList = self.__readSeasons__(self.__wayToSerial)
+        return self.__seasList
 
     @property
     def serialName(self):
@@ -281,10 +292,10 @@ class MakeSerial:
 
     @property
     def serialInfo(self):
-        thisDict = {}
-        allDict = self.fitch
+        allDict = {}
+        allDict['serial_name'] = self.serialName
+        allDict.update(self.fitch)
         allDict['tf'] = self.tf
         allDict['idf'] = self.idf
-        allDict['tfidf'] = self.tfIdf
-        thisDict[self.serialName] = allDict
-        return thisDict
+        allDict['tf_idf'] = self.tfIdf
+        return allDict
