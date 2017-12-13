@@ -53,7 +53,31 @@ class MongoDataPusher(MongoWork):
         seriaDict.update(seria.seriaInfo)
         db.serias.insert(seriaDict)
 
+class MongoContrastPusher(MongoWork):
+    def __init__(self, login, password, dbName, servDist):
+        MongoWork.__init__(self, login, password, dbName, servDist)
+
+    def pushContrastSerialDict(self, contrastDict, db):
+        thisContrastDict = {}
+        o = ObjectId()
+        thisContrastDict['_id'] = o
+        thisContrastDict['idf'] = contrastDict
+        db.contrast.insert(thisContrastDict)
+
 
 class MongoDataPuller(MongoWork):
     def __init__(self, login, password, dbName, servDist):
         MongoWork.__init__(self, login, password, dbName, servDist)
+
+    def find(self, db, qv=None):
+        if qv is None:
+            cursor = db.serials.find()
+        else:
+            cursor = db.serials.find(qv)
+        resultList = []
+        for document in cursor:
+            resultList.append(document)
+        return resultList
+
+    def pullContrast(self, db):
+        return db.contrast.findOne()['idf']

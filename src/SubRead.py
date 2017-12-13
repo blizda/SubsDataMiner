@@ -4,7 +4,7 @@ from abc import ABCMeta
 from statistics import median
 from chardet import UniversalDetector
 from os import listdir
-from os.path import join, basename
+from os.path import join, basename, isdir
 from rutermextract import TermExtractor
 from GetFitch import GetFitch
 
@@ -105,7 +105,8 @@ class MakeSeason:
         serialsList = []
         files = listdir(wayToSeas)
         for file in files:
-            serialsList.append(MakeSeria(join(wayToSeas, file)))
+            if file.endswith('.srt'):
+                serialsList.append(MakeSeria(join(wayToSeas, file)))
         return serialsList
 
     def __seasNotNormaliseIdf__(self, serList):
@@ -205,7 +206,8 @@ class MakeSerial:
         serialsList = []
         files = listdir(wayToSerial)
         for file in files:
-            serialsList.append(MakeSeason(join(wayToSerial, file)))
+            if isdir(join(wayToSerial, file)):
+                serialsList.append(MakeSeason(join(wayToSerial, file)))
         return serialsList
 
     def __idf__(self, seasList):
